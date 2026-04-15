@@ -1,16 +1,27 @@
-# Entornos virtuales
+# --- Entornos virtuales ---
 venv/
 .venv/
 env/
+virtualenv/
 
-# Archivos de caché de Python
+# --- Archivos de caché de Python ---
 __pycache__/
 *.py[cod]
 *$py.class
+.pytest_cache/
+.mypy_cache/
 
-# Archivos de configuración del sistema operativo
+# --- Configuración de Editores---
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# --- Archivos del Sistema Operativo ---
 .DS_Store
 Thumbs.db
+desktop.ini
 
-# Variables de entorno (Si las usamos en el futuro)
-.env
+# --- Multimedia y temporales---
+assets/*.mp4
+assets/*.mp3
