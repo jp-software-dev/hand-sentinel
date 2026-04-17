@@ -5,7 +5,7 @@
 ![MediaPipe](https://img.shields.io/badge/mediapipe-latest-orange?style=for-the-badge)
 ![License](https://img.shields.io/badge/license-MIT-yellow?style=for-the-badge)
 
-Hand Sentinel es un motor de reconocimiento gestual de alto rendimiento desarrollado en Python. Utiliza modelos de Deep Learning para el mapeo de 21 nodos articulares, traduciendo movimientos físicos en flujos de datos binarios para el control de interfaces y automatización táctica.
+Hand Sentinel is a high-performance gesture recognition engine developed in Python. It utilizes Deep Learning models to map 21 articular nodes, translating physical movements into binary data streams for interface control and tactical automation.
 
 ## Features
 
