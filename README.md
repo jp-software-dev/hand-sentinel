@@ -1,21 +1,37 @@
-# Hand Sentinel: Computer Vision Engine
+# Hand Sentinel: Computer Vision Engine 🦾
 
-![Python](https://img.shields.io/badge/python-3670A0?style=for-the-badge&logo=python&logoColor=ffdd54)
-![OpenCV](https://img.shields.io/badge/opencv-%23white.svg?style=for-the-badge&logo=opencv&logoColor=white)
-![MediaPipe](https://img.shields.io/badge/mediapipe-latest-orange?style=for-the-badge)
-![License](https://img.shields.io/badge/license-MIT-yellow?style=for-the-badge)
+<p align="center">
+  <img src="https://img.shields.io/badge/Python-3776AB?style=for-the-badge&logo=python&logoColor=white" />
+  <img src="https://img.shields.io/badge/OpenCV-5C3EE8?style=for-the-badge&logo=opencv&logoColor=white" />
+  <img src="https://img.shields.io/badge/MediaPipe-00C0A8?style=for-the-badge&logo=google&logoColor=white" />
+  <img src="https://img.shields.io/badge/Status-Stable-green?style=for-the-badge" />
+</p>
 
-Hand Sentinel is a high-performance gesture recognition engine developed in Python. It utilizes Deep Learning models to map 21 articular nodes, translating physical movements into binary data streams for interface control and tactical automation.
+**Hand Sentinel** is a high-performance neural recognition engine designed for real-time human-computer interaction. Utilizing Deep Learning models, it maps 21 articular nodes per hand, translating physical movements into high-precision binary data streams for tactical automation and interface control.
 
-## Features
+---
 
-* **Real-time Tracking:** Mapeo preciso de manos mediante redes neuronales.
-* **Gesture Logic:** Traducción de posiciones articulares en comandos binarios.
-* **Modular Architecture:** Estructura limpia separada en core, UI y assets para fácil integración.
-* **Low Latency:** Optimizado para ejecución en tiempo real mediante OpenCV.
+### 🚀 Key Features
 
-## Quick Start (Windows)
+* **Real-time Neural Tracking:** Precise hand mapping using Google's MediaPipe BlazePalm architecture.
+* **Gesture-to-Binary Logic:** Advanced translation of articular positions into executable commands.
+* **Modular DevSec Architecture:** Clean structure separated into `core` (logic), `ui` (display), and `assets` for seamless integration.
+* **Low Latency Optimization:** Optimized frame processing via OpenCV for zero-lag tactical execution.
 
-1. Clone the repository:
+---
+
+### 🛡️ Red Team & Tactical Application
+
+Beyond standard UI control, **Hand Sentinel** serves as a research base for:
+* **Air-Gapped Interaction:** Controlling systems without physical contact (keyboards/mice) to avoid forensic footprints.
+* **Tactical Automation:** Executing pre-configured scripts or payloads through silent hand gestures.
+* **Biometric Signal Research:** Analyzing movement patterns for gesture-based authentication bypass or verification.
+
+---
+
+### 🛠️ Installation & Setup
+
+1. **Clone the repository:**
    ```bash
-   git clone https://github.com/jp-software-dev/hand-sentinel.git
+   git clone [https://github.com/jp-software-dev/hand-sentinel.git](https://github.com/jp-software-dev/hand-sentinel.git)
+   cd hand-sentinel
