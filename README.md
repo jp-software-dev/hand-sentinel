@@ -1,7 +1,7 @@
 # Hand Sentinel: Computer Vision Engine 
 
 <p align="center">
-  ![Python](https://img.shields.io/badge/python-3670A0?style=for-the-badge&logo=python&logoColor=ffdd54)
+  <img src="https://img.shields.io/badge/Python-3776AB?style=for-the-badge&logo=python&logoColor=white" />
   <img src="https://img.shields.io/badge/OpenCV-5C3EE8?style=for-the-badge&logo=opencv&logoColor=white" />
   <img src="https://img.shields.io/badge/MediaPipe-00C0A8?style=for-the-badge&logo=google&logoColor=white" />
   <img src="https://img.shields.io/badge/Status-Latest-orange?style=for-the-badge" />
@@ -24,4 +24,4 @@
 
 1. **Clone the repository:**
    ```bash
-   git clone [https://github.com/jp-software-dev/hand-sentinel.git](https://github.com/jp-software-dev/hand-sentinel.git)
+   git clone https://github.com/jp-software-dev/hand-sentinel.git
