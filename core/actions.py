@@ -1,66 +1,107 @@
+# Import the math module to calculate the distance between points
 import math
 
 class HandSentinelActions:
     def __init__(self):
+        # Define a list of point IDs corresponding to the fingertips (Thumb, Index, Middle, Ring, Pinky)
         self.tip_ids = [4, 8, 12, 16, 20]
-        self.tolerancia_combo = 0
-
-    def escanear_dedos_activos(self, lista_puntos):
-        dedos_activos = []
-        if len(lista_puntos) == 0:
-            return dedos_activos
         
-        if lista_puntos[self.tip_ids[0]][1] > lista_puntos[self.tip_ids[0] - 1][1]:
-            dedos_activos.append(1)
+        # Define the amount of tolerance frames before turning off the combo
+        self.combo_tolerance = 0
+
+    def scan_active_fingers(self, landmark_list):
+        # Create an empty list to store which fingers are open (1) or closed (0)
+        active_fingers = []
+        
+        # Check if the hand has no landmarks, and return the empty list if so
+        if len(landmark_list) == 0:
+            return active_fingers
+        
+        # Check the thumb: verify if its x-coordinate is further than the lower joint
+        if landmark_list[self.tip_ids[0]][1] > landmark_list[self.tip_ids[0] - 1][1]:
+            active_fingers.append(1)
         else:
-            dedos_activos.append(0)
+            active_fingers.append(0)
             
-        for id_dedo in range(1, 5):
-            punta_y = lista_puntos[self.tip_ids[id_dedo]][2]
-            nudillo_y = lista_puntos[self.tip_ids[id_dedo] - 2][2]
-            if punta_y < nudillo_y:
-                dedos_activos.append(1)
+        # Start a loop to check the remaining 4 fingers (Index to Pinky)
+        for finger_id in range(1, 5):
+            # Get the y-coordinate of the current fingertip
+            tip_y = landmark_list[self.tip_ids[finger_id]][2]
+            
+            # Get the y-coordinate of the knuckle for the same finger
+            knuckle_y = landmark_list[self.tip_ids[finger_id] - 2][2]
+            
+            # Check if the tip is higher up on the screen (lower y-value) than the knuckle
+            if tip_y < knuckle_y:
+                active_fingers.append(1)
             else:
-                dedos_activos.append(0)
-        return dedos_activos
+                active_fingers.append(0)
+                
+        # Return the final list of active and inactive fingers
+        return active_fingers
     
-    def calcular_distancia(self, p1, p2, lista_puntos):
-        if len(lista_puntos) == 0:
+    def calculate_distance(self, p1, p2, landmark_list):
+        # Return 0 if the landmark list is empty
+        if len(landmark_list) == 0:
             return 0, None
         
-        x1, y1 = lista_puntos[p1][1], lista_puntos[p1][2]
-        x2, y2 = lista_puntos[p2][1], lista_puntos[p2][2]
+        # Extract the X and Y coordinates for both requested points
+        x1, y1 = landmark_list[p1][1], landmark_list[p1][2]
+        x2, y2 = landmark_list[p2][1], landmark_list[p2][2]
+        
+        # Calculate the exact center point between the two landmarks
         cx, cy = (x1 + x2) // 2, (y1 + y2) // 2 
 
-        distancia = math.hypot(x2 - x1, y2 - y1)
-        info_espacial = (x1, y1, x2, y2, cx, cy)
-        return distancia, info_espacial
+        # Calculate the Euclidean distance using the math library
+        distance = math.hypot(x2 - x1, y2 - y1)
+        
+        # Group the spatial information into a single tuple
+        spatial_info = (x1, y1, x2, y2, cx, cy)
+        
+        return distance, spatial_info
 
-    def detectar_combo_gato(self, todas_las_manos, ancho, alto):
-        if len(todas_las_manos) == 2:
-            zona_cara_y_max = alto * 0.55  
-            mano_arriba = False
-            manos_abiertas = 0
-            manos_cerradas = 0
-
-            for puntos_mano in todas_las_manos:
-                cy = puntos_mano[9][2]
+    def detect_cat_combo(self, all_hands, width, height):
+        # Verify that exactly two hands are detected in the frame
+        if len(all_hands) == 2:
+            hand1 = all_hands[0]
+            hand2 = all_hands[1]
+            
+            # IMPROVEMENT 1: Ensure both hands are fully visible (21 points) to avoid "ghost hands"
+            if len(hand1) == 21 and len(hand2) == 21:
                 
-                if cy < zona_cara_y_max:
-                    mano_arriba = True
+                # Get the center point (Middle finger lower joint, ID 9) for both hands
+                cx1, cy1 = hand1[9][1], hand1[9][2]
+                cx2, cy2 = hand2[9][1], hand2[9][2]
                 
-                dedos = self.escanear_dedos_activos(puntos_mano)
-                if sum(dedos) >= 4:
-                    manos_abiertas += 1
-                elif sum(dedos) <= 2:
-                    manos_cerradas += 1
+                # IMPROVEMENT 2: Ensure hands are physically separated to avoid overlapping confusion
+                distance_between_hands = math.hypot(cx2 - cx1, cy2 - cy1)
+                min_distance_required = width * 0.15 # Hands must be separated by at least 15% of screen width
+                
+                if distance_between_hands > min_distance_required:
+                    
+                    # Set a boundary limit for the upper face zone (upper 55% of the screen)
+                    face_zone_y_max = height * 0.55  
+                    
+                    # Check if at least one hand is in the upper part of the screen
+                    if cy1 < face_zone_y_max or cy2 < face_zone_y_max:
+                        
+                        # Count active fingers for both hands
+                        fingers1 = sum(self.scan_active_fingers(hand1))
+                        fingers2 = sum(self.scan_active_fingers(hand2))
+                        
+                        # IMPROVEMENT 3: Stricter roles. One strictly closed (0-1), one strictly open (4-5)
+                        is_valid_pose = (fingers1 <= 1 and fingers2 >= 4) or (fingers1 >= 4 and fingers2 <= 1)
 
-            if mano_arriba and manos_abiertas == 1 and manos_cerradas == 1:
-                self.tolerancia_combo = 20
-                return True
+                        if is_valid_pose:
+                            # Refill the tolerance buffer to 20 frames
+                            self.combo_tolerance = 20 
+                            return True
 
-        if self.tolerancia_combo > 0:
-            self.tolerancia_combo -= 1
+        # If the combo breaks, check if we still have tolerance frames left
+        if self.combo_tolerance > 0:
+            # Subtract one tolerance frame
+            self.combo_tolerance -= 1
             return True
 
+        # Return False if the combo is not active and no tolerance is left
         return False
