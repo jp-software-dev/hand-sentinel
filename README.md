@@ -1,27 +1,27 @@
-# Hand Sentinel: Computer Vision Engine
+# Hand Sentinel: Computer Vision Engine 
 
-[![Python 3.9+](https://img.shields.io/badge/Python-3.9+-blue.svg?style=for-the-badge&logo=python&logoColor=white)](https://www.python.org/)
-[![OpenCV](https://img.shields.io/badge/OpenCV-4.x-green.svg?style=for-the-badge&logo=opencv&logoColor=white)](https://opencv.org/)
-[![MediaPipe](https://img.shields.io/badge/MediaPipe-Latest-orange.svg?style=for-the-badge&logo=google&logoColor=white)](https://google.github.io/mediapipe/)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg?style=for-the-badge)](https://opensource.org/licenses/MIT)
+<p align="center">
+  <img src="https://img.shields.io/badge/Python-3776AB?style=for-the-badge&logo=python&logoColor=white" />
+  <img src="https://img.shields.io/badge/OpenCV-5C3EE8?style=for-the-badge&logo=opencv&logoColor=white" />
+  <img src="https://img.shields.io/badge/MediaPipe-00C0A8?style=for-the-badge&logo=google&logoColor=white" />
+  <img src="https://img.shields.io/badge/Status-Latest-orange?style=for-the-badge" />
+</p>
 
-**Hand Sentinel** es un motor de reconocimiento gestual de alto rendimiento desarrollado en Python. Utiliza modelos de Deep Learning para el mapeo de 21 nodos articulares, traduciendo movimientos físicos en flujos de datos binarios para control de interfaces y automatización táctica.
+**Hand Sentinel** is a high-performance gesture recognition engine developed in Python. It utilizes Deep Learning models to map 21 articular nodes, translating physical movements into binary data streams for interface control and automation.
 
 ---
 
-## Quick Start (Windows)
+### Features
 
-Sigue estos pasos para desplegar el centinela en tu entorno local:
+* **Real-time Tracking:** Precise hand mapping utilizing neural network architectures.
+* **Gesture Logic:** Translation of articular positions into executable binary commands.
+* **Modular Architecture:** Clean structure separated into `core`, `ui`, and `assets` for seamless integration.
+* **Low Latency:** Optimized for real-time execution via OpenCV frame processing.
 
-```bash
-# 1. Clonar el repositorio
-git clone [https://github.com/jp-software-dev/hand-sentinel.git](https://github.com/jp-software-dev/hand-sentinel.git)
-cd hand-sentinel
+---
 
-# 2. Configurar entorno virtual e instalar dependencias
-python -m venv venv
-.\venv\Scripts\activate
-pip install -r requirements.txt
+### Quick Start (Windows)
 
-# 3. Ejecutar el orquestador
-python main.py
+1. **Clone the repository:**
+   ```bash
+   git clone https://github.com/jp-software-dev/hand-sentinel.git
