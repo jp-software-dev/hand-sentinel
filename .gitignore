@@ -11,7 +11,7 @@ __pycache__/
 .pytest_cache/
 .mypy_cache/
 
-# --- Configuración de Editores---
+# --- Configuración de Editores ---
 .vscode/
 .idea/
 *.swp
@@ -22,6 +22,14 @@ __pycache__/
 Thumbs.db
 desktop.ini
 
-# --- Multimedia y temporales---
+# --- Logs y Seguridad ---
+*.log
+.env
+.env.local
+
+# --- Multimedia y temporales ---
 assets/*.mp4
 assets/*.mp3
+assets/*.wav
+!assets/scuba_cat.mp4
+!assets/audio.mp3
