@@ -1,72 +1,91 @@
-# Import OpenCV to capture video from the computer's webcam
 import cv2
-# Import Pygame to manage the audio system
 import pygame
+import logging
+import sys
+import threading
 
-# Import the logic, detection, and UI modules from the project folders
-from core.detector import HandSentinelDetector    
-from core.actions import HandSentinelActions
+from core.detector import HandSentinelDetector
+from core.gesture_registry import GestureRegistry, ScubaCatGesture
 from ui.display import HandSentinelUI
+from config.settings import DETECTOR_CFG, UI_CFG
+from utils.frame_buffer import FrameBuffer
+
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s [%(levelname)s] %(name)s: %(message)s"
+)
+logger = logging.getLogger(__name__)
+
+def capture_thread(cap, buffer, stop_event):
+    while not stop_event.is_set():
+        success, frame = cap.read()
+        if success:
+            buffer.put(cv2.flip(frame, 1))
+    logger.info("Hilo de captura terminado.")
 
 def main():
-    # Initialize the audio mixer module for background music
     pygame.mixer.init()
-    
-    # Open the default webcam (index 0)
     cap = cv2.VideoCapture(0)
-    
-    # Create an instance of the Detector module
-    detector = HandSentinelDetector()
-    
-    # Create an instance of the Actions module
-    actions = HandSentinelActions()
-    
-    # Create an instance of the UI module
-    ui = HandSentinelUI()
 
-    # Start an infinite loop to process the video frame by frame
-    while True:
-        # Read the current frame from the webcam
-        success, frame = cap.read()
-        
-        # Break the loop if the camera fails to provide a frame
-        if not success:
-            break
+    if not cap.isOpened():
+        logger.error("No se pudo abrir la cámara.")
+        return 1
 
-        # Flip the frame horizontally to act like a mirror
-        frame = cv2.flip(frame, 1)
-        
-        # Send the frame to the detector to process and draw landmarks
-        frame = detector.find_hands(frame)
-        
-        # Extract the current dimensions of the frame
-        height, width, _ = frame.shape
-        
-        # Get the nested list containing data for all hands present
-        all_hands = detector.find_all_hands(frame)
-        
-        # Evaluate if the Scuba Cat gesture is currently being performed
-        combo_active = actions.detect_cat_combo(all_hands, width, height)
-        
-        # Draw the entire HUD (including the green screen and texts)
-        frame = ui.draw_hud(frame, combo_active=combo_active)
-        
-        # Show the processed frame to the user
-        ui.show_window(frame)
+    buffer = FrameBuffer(maxsize=2)
+    stop_evt = threading.Event()
+    cap_thread = threading.Thread(
+        target=capture_thread, args=(cap, buffer, stop_evt), daemon=True
+    )
+    cap_thread.start()
 
-        # Wait 1 millisecond for user input, break loop if 'q' is pressed
-        if cv2.waitKey(1) & 0xFF == ord('q'):
-            break
+    detector = HandSentinelDetector(
+        max_hands=DETECTOR_CFG.max_hands,
+        detection_con=DETECTOR_CFG.detection_confidence,
+        track_con=DETECTOR_CFG.tracking_confidence
+    )
 
-    # Release the webcam hardware block
-    cap.release()
-    
-    # Shut down the audio engine safely
-    pygame.mixer.quit()
-    
-    # Close all OpenCV windows to prevent crashes
-    cv2.destroyAllWindows()
+    registry = GestureRegistry()
+    registry.register("scuba_cat", ScubaCatGesture())
 
-# Entry point of the script: only run main() if executed directly
+    ui = HandSentinelUI(
+        video_path=UI_CFG.video_path,
+        audio_path=UI_CFG.audio_path
+    )
+
+    logger.info("Hand Sentinel iniciado. Presiona 'q' para salir.")
+
+    try:
+        while True:
+            try:
+                frame = buffer.get()
+            except Exception:
+                break
+
+            height, width = frame.shape[:2]
+
+            frame, all_hands = detector.process_frame(frame)
+
+            gestures = registry.detect_all(all_hands, width, height)
+            combo_active = gestures.get("scuba_cat", False)
+
+            frame = ui.draw_hud(frame, combo_active=combo_active)
+            ui.show_window(frame)
+
+            if cv2.waitKey(1) & 0xFF == ord('q'):
+                break
+
+    except KeyboardInterrupt:
+        logger.info("Interrumpido por el usuario.")
+
+    finally:
+        stop_evt.set()
+        cap_thread.join(timeout=2.0)
+        cap.release()
+        pygame.mixer.quit()
+        cv2.destroyAllWindows()
+        logger.info("Hand Sentinel cerrado correctamente.")
+
+    return 0
+
 if __name__ == "__main__":
-    main()
+    sys.exit(main())
