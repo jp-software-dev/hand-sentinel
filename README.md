@@ -16,17 +16,55 @@
 * **Low Latency Processing:** Highly optimized for real-time execution and zero-lag rendering via OpenCV frame processing.
 * **Modular Engineering:** Clean, scalable architecture strictly separated into `core` (AI engine), `ui` (interface), and `assets` (media and data) for seamless future integrations.
 
-## 🛠 Technologies Used
+## 🗂️ Project Structure
 
-* **Core Language:** Python 3.x
-* **Computer Vision:** OpenCV, MediaPipe (Hand Tracking Solutions)
-* **Machine Learning / AI:** Integrated Neural Network logic for gesture classification
-* **Architecture:** Modular component isolation and real-time data streaming.
+The engine is built with a highly modular approach to ensure clean code and scalability:
 
-## 🚀 Installation & Setup
+```text
+hand-sentinel/
+├── assets/       # Media files and output data
+├── config/       # Global configurations and parameters
+├── core/         # AI engine, node tracking, and neural network logic
+├── ui/           # User interface components and visual OpenCV overlays
+├── utils/        # Helper functions and isolated auxiliary scripts
+├── main.py       # Main execution script
+└── requirements.txt
 
+🛠 Technologies Used
+Core Language: Python 3.x
+
+Computer Vision: OpenCV, MediaPipe (Hand Tracking Solutions)
+
+Machine Learning / AI: Integrated Neural Network logic for gesture classification
+
+Architecture: Modular component isolation and real-time data streaming.
+
+🚀 Installation & Setup
 To deploy the Hand Sentinel engine locally on a Windows environment:
 
-1. Clone the repository:
-   ```bash
-   git clone https://github.com/jp-software-dev/hand-sentinel.git
+Clone the repository:
+
+Bash
+git clone [https://github.com/jp-software-dev/hand-sentinel.git](https://github.com/jp-software-dev/hand-sentinel.git)
+Navigate into the project directory:
+
+Bash
+cd hand-sentinel
+Install the required dependencies:
+
+Bash
+pip install -r requirements.txt
+Run the main engine:
+
+Bash
+python main.py
+🎮 Usage: The "Scuba" Trigger
+Once the engine is running and your webcam is active, Hand Sentinel will map your hand nodes in real-time.
+
+To trigger the automated media response (Scuba Cat meme):
+
+Bring both hands into the camera frame.
+
+Place your hands over your mouth and raise one in the air, simulating a scuba mask.
+
+The neural network will instantly classify this physical sign and execute the video playback command without needing to touch the keyboard or mouse.
