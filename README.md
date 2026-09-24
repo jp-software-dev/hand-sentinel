@@ -49,9 +49,8 @@ cd hand-sentinel
 pip install -r requirements.txt
 
 4. Run the main engine:
-
-Bash
 python main.py
+
 🎮 Usage: The "Scuba" Trigger
 Once the engine is running and your webcam is active, Hand Sentinel will map your hand nodes in real-time.
 
