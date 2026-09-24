@@ -31,30 +31,24 @@ hand-sentinel/
 └── requirements.txt
 
 🛠 Technologies Used
-Core Language: Python 3.x
-
-Computer Vision: OpenCV, MediaPipe (Hand Tracking Solutions)
-
-Machine Learning / AI: Integrated Neural Network logic for gesture classification
-
-Architecture: Modular component isolation and real-time data streaming.
+- Core Language: Python 3.x
+- Computer Vision: OpenCV, MediaPipe (Hand Tracking Solutions)
+- Machine Learning / AI: Integrated Neural Network logic for gesture classification
+- Architecture: Modular component isolation and real-time data streaming.
 
 🚀 Installation & Setup
 To deploy the Hand Sentinel engine locally on a Windows environment:
 
-Clone the repository:
-
-Bash
+1. Clone the repository:
 git clone [https://github.com/jp-software-dev/hand-sentinel.git](https://github.com/jp-software-dev/hand-sentinel.git)
-Navigate into the project directory:
 
-Bash
+2. Navigate into the project directory:
 cd hand-sentinel
-Install the required dependencies:
 
-Bash
+3. Install the required dependencies:
 pip install -r requirements.txt
-Run the main engine:
+
+4. Run the main engine:
 
 Bash
 python main.py
@@ -63,8 +57,6 @@ Once the engine is running and your webcam is active, Hand Sentinel will map you
 
 To trigger the automated media response (Scuba Cat meme):
 
-Bring both hands into the camera frame.
-
-Place your hands over your mouth and raise one in the air, simulating a scuba mask.
-
-The neural network will instantly classify this physical sign and execute the video playback command without needing to touch the keyboard or mouse.
+- Bring both hands into the camera frame.
+- Place your hands over your mouth and raise one in the air, simulating a scuba mask.
+- The neural network will instantly classify this physical sign and execute the video playback command without needing to touch the keyboard or mouse.
