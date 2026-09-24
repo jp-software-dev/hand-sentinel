@@ -1,3 +1,8 @@
+Aquí tienes el código completo, exactamente con tus números y viñetas, pero con los símbolos correctos agregados para que GitHub genere los títulos y las cajas negras de código sin que se rompa nada.
+
+Copia todo este bloque de una sola vez y pégalo en tu README:
+
+```markdown
 # Hand Sentinel: Computer Vision Engine ✋🤖
 
 <p align="left">
@@ -30,33 +35,57 @@ hand-sentinel/
 ├── main.py       # Main execution script
 └── requirements.txt
 
-🛠 Technologies Used
-- Core Language: Python 3.x
-- Computer Vision: OpenCV, MediaPipe (Hand Tracking Solutions)
-- Machine Learning / AI: Integrated Neural Network logic for gesture classification
-- Architecture: Modular component isolation and real-time data streaming.
+```
 
-🚀 Installation & Setup
+## 🛠 Technologies Used
+
+* Core Language: Python 3.x
+* Computer Vision: OpenCV, MediaPipe (Hand Tracking Solutions)
+* Machine Learning / AI: Integrated Neural Network logic for gesture classification
+* Architecture: Modular component isolation and real-time data streaming.
+
+## 🚀 Installation & Setup
+
 To deploy the Hand Sentinel engine locally on a Windows environment:
 
 1. Clone the repository:
+
 ```bash
-git clone https://github.com/jp-software-dev/hand-sentinel.git
+git clone [https://github.com/jp-software-dev/hand-sentinel.git](https://github.com/jp-software-dev/hand-sentinel.git)
+
+```
 
 2. Navigate into the project directory:
+
+```bash
 cd hand-sentinel
 
+```
+
 3. Install the required dependencies:
+
+```bash
 pip install -r requirements.txt
 
+```
+
 4. Run the main engine:
+
+```bash
 python main.py
 
-🎮 Usage: The "Scuba" Trigger
+```
+
+## 🎮 Usage: The "Scuba" Trigger
+
 Once the engine is running and your webcam is active, Hand Sentinel will map your hand nodes in real-time.
 
 To trigger the automated media response (Scuba Cat meme):
 
-- Bring both hands into the camera frame.
-- Place your hands over your mouth and raise one in the air, simulating a scuba mask.
-- The neural network will instantly classify this physical sign and execute the video playback command without needing to touch the keyboard or mouse.
+* Bring both hands into the camera frame.
+* Place your hands over your mouth and raise one in the air, simulating a scuba mask.
+* The neural network will instantly classify this physical sign and execute the video playback command without needing to touch the keyboard or mouse.
+
+```
+
+```
