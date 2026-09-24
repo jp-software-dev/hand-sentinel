@@ -80,5 +80,3 @@ To trigger the automated media response (Scuba Cat meme):
 * Bring both hands into the camera frame.
 * Place your hands over your mouth and raise one in the air, simulating a scuba mask.
 * The neural network will instantly classify this physical sign and execute the video playback command without needing to touch the keyboard or mouse.
-
-```
