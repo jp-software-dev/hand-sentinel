@@ -1,8 +1,3 @@
-Aquí tienes el código completo, exactamente con tus números y viñetas, pero con los símbolos correctos agregados para que GitHub genere los títulos y las cajas negras de código sin que se rompa nada.
-
-Copia todo este bloque de una sola vez y pégalo en tu README:
-
-```markdown
 # Hand Sentinel: Computer Vision Engine ✋🤖
 
 <p align="left">
