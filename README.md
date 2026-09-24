@@ -40,7 +40,7 @@ hand-sentinel/
 To deploy the Hand Sentinel engine locally on a Windows environment:
 
 1. Clone the repository:
-git clone [https://github.com/jp-software-dev/hand-sentinel.git](https://github.com/jp-software-dev/hand-sentinel.git)
+git clone https://github.com/jp-software-dev/hand-sentinel.git
 
 2. Navigate into the project directory:
 cd hand-sentinel
