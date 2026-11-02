@@ -4,22 +4,6 @@ import cv2
 # Import Google's MediaPipe library for AI hand tracking
 import mediapipe as mp
 
-# Import logging to output status messages
-import logging
-
-# Import dataclass to define a simple structure for hand landmarks
-from dataclasses import dataclass
-
-# Initialize a logger for the detector module
-logger = logging.getLogger(__name__)
-
-# Define a simple data structure to represent a single joint/point on the hand
-@dataclass
-class HandLandmark:
-    id: int
-    x: int
-    y: int
-
 class HandSentinelDetector:
     def __init__(self, mode=False, max_hands=2, detection_con=0.5, track_con=0.5):
         # Load the MediaPipe Hands solution module
