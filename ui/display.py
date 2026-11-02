@@ -63,6 +63,10 @@ class CatVideoProcessor:
         # Release the video file from memory once all frames are processed
         cap.release()
 
+        # Without frames the overlay silently never appears, so make the problem visible in the console
+        if not self.frames:
+            logger.warning("Overlay video not found or empty: %s", path)
+
     def next_frame(self) -> tuple:
         # If the video failed to load or has no frames, return nothing
         if not self.frames:
