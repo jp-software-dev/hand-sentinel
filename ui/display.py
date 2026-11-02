@@ -16,6 +16,9 @@ import time
 # Import the custom FPSCounter to track and display the application's performance
 from utils.fps_counter import FPSCounter
 
+# Import the UI settings so sizes, paths and the window title live in one place
+from config.settings import UI_CFG
+
 # Initialize the logger for this specific module
 logger = logging.getLogger(__name__)
 
@@ -102,12 +105,12 @@ class CatVideoProcessor:
         return self.frames[index]
 
 class HandSentinelUI:
-    def __init__(self, video_path: str = "assets/Scuba_Cat.mp4", audio_path: str = "assets/audio.mp3"):
+    def __init__(self, video_path: str = UI_CFG.video_path, audio_path: str = UI_CFG.audio_path):
         # Initialize the FPS counter to monitor screen performance
-        self.fps_counter = FPSCounter()
-        
+        self.fps_counter = FPSCounter(UI_CFG.fps_history_size)
+
         # Initialize the video processor to preload the green-screen asset
-        self.cat_processor = CatVideoProcessor(video_path)
+        self.cat_processor = CatVideoProcessor(video_path, UI_CFG.cat_overlay_size)
         
         # Create a flag to track whether the sound effect is currently playing
         self._is_audio_playing = False
@@ -211,6 +214,6 @@ class HandSentinelUI:
                     
         return frame
 
-    def show_window(self, frame: np.ndarray, name: str = "Hand Sentinel - Scuba Mode"):
+    def show_window(self, frame: np.ndarray, name: str = UI_CFG.window_name):
         # Display the final composed frame in a desktop window with the given title
         cv2.imshow(name, frame)
