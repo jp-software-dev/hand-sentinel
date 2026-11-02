@@ -1,6 +1,3 @@
-# Import the threading module (often used alongside queues for multi-threaded applications)
-import threading
-
 # Import the queue module to create a thread-safe data structure for storing frames
 import queue
 

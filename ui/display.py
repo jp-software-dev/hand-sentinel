@@ -10,8 +10,14 @@ import pygame
 # Import logging to output warnings or errors to the console
 import logging
 
+# Import time to play the overlay video at its own speed, independent of the camera FPS
+import time
+
 # Import the custom FPSCounter to track and display the application's performance
 from utils.fps_counter import FPSCounter
+
+# Import the UI settings so sizes, paths and the window title live in one place
+from config.settings import UI_CFG
 
 # Initialize the logger for this specific module
 logger = logging.getLogger(__name__)
@@ -20,20 +26,31 @@ class CatVideoProcessor:
     def __init__(self, path: str, target_size: tuple = (180, 180)):
         # Create an empty list to store all the processed frames of the video in memory
         self.frames = []
-        
+
+        # Native frame rate of the video (read in _preprocess, 30 FPS if the file does not report it)
+        self.fps = 30.0
+
         # Pre-process the video immediately upon initialization to avoid lag later
         self._preprocess(path, target_size)
-        
-        # Set a counter to track which frame of the video we are currently playing
-        self._index = 0
+
+        # Moment the playback started; the current frame is derived from the elapsed time
+        self._start_time = time.perf_counter()
 
     def _preprocess(self, path: str, size: tuple):
         # Open the video file from the provided path
         cap = cv2.VideoCapture(path)
+
+        # Store the video's own frame rate so playback speed does not depend on the camera
+        native_fps = cap.get(cv2.CAP_PROP_FPS)
+        if native_fps and native_fps > 0:
+            self.fps = native_fps
         
         # Define the lower and upper bounds for the green screen color in HSV format
         lower_green = np.array([35, 40, 40])
         upper_green = np.array([85, 255, 255])
+
+        # Final (width, height) of each frame, computed from the first frame to keep the aspect ratio
+        fit_size = None
 
         # Loop through every frame in the video until it ends
         while True:
@@ -41,9 +58,13 @@ class CatVideoProcessor:
             if not ret:
                 # Break the loop if there are no more frames to read
                 break
-                
-            # Resize the frame to the target size (e.g., 180x180 pixels)
-            frame = cv2.resize(frame, size)
+
+            # Scale the video to fit inside the target box without stretching it (e.g. a vertical video stays vertical)
+            if fit_size is None:
+                src_h, src_w = frame.shape[:2]
+                scale = min(size[0] / src_w, size[1] / src_h)
+                fit_size = (max(1, int(src_w * scale)), max(1, int(src_h * scale)))
+            frame = cv2.resize(frame, fit_size, interpolation=cv2.INTER_AREA)
             
             # Convert the frame from standard BGR color space to HSV for easier color filtering
             hsv = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
@@ -63,30 +84,39 @@ class CatVideoProcessor:
         # Release the video file from memory once all frames are processed
         cap.release()
 
+        # Without frames the overlay silently never appears, so make the problem visible in the console
+        if not self.frames:
+            logger.warning("Overlay video not found or empty: %s", path)
+
+    def restart(self):
+        # Rewind the playback so the video starts from its first frame
+        self._start_time = time.perf_counter()
+
     def next_frame(self) -> tuple:
         # If the video failed to load or has no frames, return nothing
         if not self.frames:
             return None, None
-            
-        # Get the current foreground and mask based on the current index
-        item = self.frames[self._index]
-        
-        # Advance the index by 1. Use modulo (%) to loop back to 0 when reaching the end
-        self._index = (self._index + 1) % len(self.frames)
-        
+
+        # Pick the frame that matches the elapsed time. Use modulo (%) to loop back to 0 when reaching the end
+        elapsed = time.perf_counter() - self._start_time
+        index = int(elapsed * self.fps) % len(self.frames)
+
         # Return the requested frame data
-        return item
+        return self.frames[index]
 
 class HandSentinelUI:
-    def __init__(self, video_path: str = "assets/scuba_cat.mp4", audio_path: str = "assets/audio.mp3"):
+    def __init__(self, video_path: str = UI_CFG.video_path, audio_path: str = UI_CFG.audio_path):
         # Initialize the FPS counter to monitor screen performance
-        self.fps_counter = FPSCounter()
-        
+        self.fps_counter = FPSCounter(UI_CFG.fps_history_size)
+
         # Initialize the video processor to preload the green-screen asset
-        self.cat_processor = CatVideoProcessor(video_path)
+        self.cat_processor = CatVideoProcessor(video_path, UI_CFG.cat_overlay_size)
         
         # Create a flag to track whether the sound effect is currently playing
         self._is_audio_playing = False
+
+        # Remember the combo state of the previous frame to detect when it turns on
+        self._was_active = False
         
         # Load the audio file into memory
         self._audio = self._load_audio(audio_path)
@@ -129,7 +159,11 @@ class HandSentinelUI:
         
         # Define the X coordinates (left to right) for placing the video
         x1, x2 = frame.shape[1] - w - 20, frame.shape[1] - 20
-        
+
+        # Skip the overlay if the camera frame is too small to hold it (slicing would produce a mismatched ROI)
+        if x1 < 0 or y2 > frame.shape[0]:
+            return frame
+
         # Select the Region of Interest (ROI) on the main camera frame where the video will go
         roi = frame[y1:y2, x1:x2]
         
@@ -142,8 +176,13 @@ class HandSentinelUI:
         # Draw a green rectangular border around the overlaid video
         cv2.rectangle(frame, (x1-5, y1-5), (x2+5, y2+5), (0,255,0), 2)
         
-        # Add text directly below the video indicating the mode is active
-        cv2.putText(frame, 'SCUBA MODE: ACTIVE', (x1, y2+25),
+        # Add text directly below the video indicating the mode is active.
+        # The label is wider than the (vertical) video, so align it to the right edge of the box
+        # and clamp it to the frame so it is never cut off
+        label = 'SCUBA MODE: ACTIVE'
+        (text_w, _), _ = cv2.getTextSize(label, cv2.FONT_HERSHEY_SIMPLEX, 0.5, 2)
+        text_x = max(5, min(x1, x2 + 5 - text_w))
+        cv2.putText(frame, label, (text_x, y2+25),
                     cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0,255,0), 2)
                     
         return frame
@@ -152,6 +191,11 @@ class HandSentinelUI:
         # Check if we need to start or stop the audio based on the combo status
         self._handle_audio(combo_active)
         
+        # Restart the video from the beginning each time the combo turns on
+        if combo_active and not self._was_active:
+            self.cat_processor.restart()
+        self._was_active = combo_active
+
         # If the correct hand gesture combo is detected, overlay the video onto the screen
         if combo_active:
             frame = self._overlay_cat(frame)
@@ -175,6 +219,6 @@ class HandSentinelUI:
                     
         return frame
 
-    def show_window(self, frame: np.ndarray, name: str = "Hand Sentinel - Scuba Mode"):
+    def show_window(self, frame: np.ndarray, name: str = UI_CFG.window_name):
         # Display the final composed frame in a desktop window with the given title
         cv2.imshow(name, frame)

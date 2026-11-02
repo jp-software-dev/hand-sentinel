@@ -4,6 +4,12 @@ from abc import ABC, abstractmethod
 # Import math to calculate distances between coordinates
 import math
 
+# Import time to measure the grace period in seconds instead of frames
+import time
+
+# Import the gesture thresholds so they can be tuned from a single place
+from config.settings import GESTURE_CFG
+
 class BaseGesture(ABC):
     # Enforce that any class inheriting from BaseGesture MUST have a 'detect' method
     @abstractmethod
@@ -11,37 +17,39 @@ class BaseGesture(ABC):
         ...
 
 class ScubaCatGesture(BaseGesture):
-    def __init__(self):
+    def __init__(self, cfg=GESTURE_CFG):
+        # Store the thresholds that define a valid pose
+        self.cfg = cfg
         # Define the point IDs corresponding to the tips of the 5 fingers
         self.tip_ids = [4, 8, 12, 16, 20]
-        # Initialize the tolerance counter to 0
-        self.combo_tolerance = 0
+        # Timestamp of the last frame where the full pose was detected (None = never)
+        self._last_valid_time = None
 
-    def scan_active_fingers(self, landmark_list, is_right_hand=True):
+    @staticmethod
+    def _dist(landmark_list, a, b):
+        # Return the Euclidean distance in pixels between two landmarks of the same hand
+        return math.hypot(landmark_list[a][1] - landmark_list[b][1],
+                          landmark_list[a][2] - landmark_list[b][2])
+
+    def scan_active_fingers(self, landmark_list):
         # If the hand doesn't have all 21 points, return an array indicating 5 closed fingers
         if len(landmark_list) != 21:
             return [0] * 5
 
         active = []
-        
-        # Get the X coordinate of the thumb tip and the thumb inner joint
-        thumb_tip_x = landmark_list[4][1]
-        thumb_ip_x = landmark_list[3][1]
 
-        # Check if the thumb is open based on whether it is a right or left hand
-        # This fixes the bug where thumbs were miscalculated depending on which hand was used
-        if is_right_hand:
-            active.append(1 if thumb_tip_x > thumb_ip_x else 0)
-        else:
-            active.append(1 if thumb_tip_x < thumb_ip_x else 0)
+        # Thumb: it is open when its tip is farther from the pinky base (17) than its inner joint (3).
+        # Comparing distances instead of X coordinates works for both hands, palm or back facing the camera
+        active.append(1 if self._dist(landmark_list, 4, 17) > self._dist(landmark_list, 3, 17) else 0)
 
         # Loop through the remaining 4 fingers
         for fid in range(1, 5):
-            tip_y = landmark_list[self.tip_ids[fid]][2]
-            knuckle_y = landmark_list[self.tip_ids[fid] - 2][2]
-            
-            # If the fingertip is higher on the screen than the knuckle, it's open (1), otherwise closed (0)
-            active.append(1 if tip_y < knuckle_y else 0)
+            tip = self.tip_ids[fid]
+            pip = tip - 2
+
+            # A finger is open when its tip is farther from the wrist (0) than its middle joint (PIP).
+            # Unlike comparing Y coordinates, this still works when the hand is tilted or horizontal
+            active.append(1 if self._dist(landmark_list, tip, 0) > self._dist(landmark_list, pip, 0) else 0)
 
         return active
 
@@ -61,39 +69,35 @@ class ScubaCatGesture(BaseGesture):
                 # Calculate the exact distance between the centers of both hands
                 distance_between_hands = math.hypot(cx2 - cx1, cy2 - cy1)
                 
-                # Define the minimum distance they must be apart (15% of screen width)
-                min_distance_required = width * 0.15 
+                # Define the minimum distance they must be apart (a ratio of the screen width)
+                min_distance_required = width * self.cfg.min_hand_separation_ratio
                 
                 # Proceed only if the hands are safely separated from each other
                 if distance_between_hands > min_distance_required:
                     
-                    # Define the limit for the upper area of the screen (top 55%)
-                    face_zone_y_max = height * 0.55  
+                    # Define the limit for the upper area of the screen (the "face zone")
+                    face_zone_y_max = height * self.cfg.face_zone_ratio
                     
                     # Check if at least one of the hands is raised into the "face zone"
                     if cy1 < face_zone_y_max or cy2 < face_zone_y_max:
                         
-                        # Determine logically which hand is on the right and which is on the left
-                        is_right1 = cx1 > cx2 
-                        is_right2 = not is_right1
-
-                        # Scan the fingers for both hands, passing the left/right context to fix the thumb bug
-                        fingers1 = sum(self.scan_active_fingers(hand1, is_right1))
-                        fingers2 = sum(self.scan_active_fingers(hand2, is_right2))
+                        # Count the open fingers on both hands (independent of which hand is left or right)
+                        fingers1 = sum(self.scan_active_fingers(hand1))
+                        fingers2 = sum(self.scan_active_fingers(hand2))
                         
-                        # Validate the pose: One hand must be closed (0-1 fingers) and the other open (4-5 fingers)
-                        is_valid_pose = (fingers1 <= 1 and fingers2 >= 4) or (fingers1 >= 4 and fingers2 <= 1)
+                        # Validate the pose: One hand must be closed and the other open
+                        closed, opened = self.cfg.max_fingers_closed, self.cfg.min_fingers_open
+                        is_valid_pose = (fingers1 <= closed and fingers2 >= opened) or (fingers1 >= opened and fingers2 <= closed)
 
-                        # If the pose is completely valid, activate the combo and reset the tolerance timer
+                        # If the pose is completely valid, activate the combo and restart the grace timer
                         if is_valid_pose:
-                            self.combo_tolerance = 20 
+                            self._last_valid_time = time.perf_counter()
                             return True
 
-        # If the combo is broken, check if we still have "grace period" frames left
-        if self.combo_tolerance > 0:
-            # Consume one tolerance frame and pretend the combo is still active
-            self.combo_tolerance -= 1
-            return True
+        # If the combo is broken, keep it active while we are still inside the grace period
+        if self._last_valid_time is not None:
+            if time.perf_counter() - self._last_valid_time <= self.cfg.combo_grace_seconds:
+                return True
 
         # Return False if the gesture is not detected and the tolerance has run out
         return False

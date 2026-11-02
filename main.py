@@ -13,6 +13,12 @@ import sys
 # Import threading to run the camera capture in a separate background process
 import threading
 
+# Import time to pause the capture thread briefly when the camera fails to deliver a frame
+import time
+
+# Import queue to catch the timeout raised when no frame arrives in time
+import queue
+
 # Import custom core modules for hand detection and gesture recognition
 from core.detector import HandSentinelDetector
 from core.gesture_registry import GestureRegistry, ScubaCatGesture
@@ -35,6 +41,9 @@ logging.basicConfig(
 # Initialize a logger specifically for this main script
 logger = logging.getLogger(__name__)
 
+# Number of consecutive 1-second frame timeouts tolerated before assuming the camera is gone
+MAX_FRAME_TIMEOUTS = 5
+
 def capture_thread(cap, buffer, stop_event):
     # Loop continuously until the stop signal event is triggered
     while not stop_event.is_set():
@@ -44,7 +53,10 @@ def capture_thread(cap, buffer, stop_event):
         # If the frame was successfully captured, flip it horizontally (mirror effect) and put it in the buffer
         if success:
             buffer.put(cv2.flip(frame, 1))
-            
+        else:
+            # Back off briefly on a failed read so the thread does not spin the CPU at 100%
+            time.sleep(0.01)
+
     # Log a message once the loop breaks and the thread finishes
     logger.info("Capture thread finished.")
 
@@ -97,15 +109,24 @@ def main():
     # Log a startup message to let the user know the system is ready
     logger.info("Hand Sentinel started. Press 'q' to quit.")
 
+    # Count how many times in a row the camera failed to deliver a frame in time
+    frame_timeouts = 0
+
     try:
         # Start the main execution loop to process frames
         while True:
             try:
                 # Attempt to retrieve the latest frame from the background buffer
                 frame = buffer.get()
-            except Exception:
-                # If there's an error getting the frame, break the loop
-                break
+                frame_timeouts = 0
+            except queue.Empty:
+                # A short camera stall should not close the app; only give up after several timeouts
+                frame_timeouts += 1
+                logger.warning("No frame received from the camera (%d/%d).", frame_timeouts, MAX_FRAME_TIMEOUTS)
+                if frame_timeouts >= MAX_FRAME_TIMEOUTS:
+                    logger.error("Camera stopped delivering frames. Shutting down.")
+                    break
+                continue
 
             # Extract the vertical (height) and horizontal (width) dimensions of the current frame
             height, width = frame.shape[:2]
@@ -123,10 +144,14 @@ def main():
             frame = ui.draw_hud(frame, combo_active=combo_active)
             
             # Display the final processed frame in the application window
-            ui.show_window(frame)
+            ui.show_window(frame, UI_CFG.window_name)
 
             # Wait for 1 millisecond and check if the 'q' key is pressed to manually break the loop
             if cv2.waitKey(1) & 0xFF == ord('q'):
+                break
+
+            # Stop when the user closes the window with the 'X' button, otherwise imshow would reopen it
+            if cv2.getWindowProperty(UI_CFG.window_name, cv2.WND_PROP_VISIBLE) < 1:
                 break
 
     # Handle the case where the user forcefully stops the script (e.g., using Ctrl+C in the terminal)
