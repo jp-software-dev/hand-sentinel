@@ -35,15 +35,22 @@ class CatVideoProcessor:
         lower_green = np.array([35, 40, 40])
         upper_green = np.array([85, 255, 255])
 
+        # Final (width, height) of each frame, computed from the first frame to keep the aspect ratio
+        fit_size = None
+
         # Loop through every frame in the video until it ends
         while True:
             ret, frame = cap.read()
             if not ret:
                 # Break the loop if there are no more frames to read
                 break
-                
-            # Resize the frame to the target size (e.g., 180x180 pixels)
-            frame = cv2.resize(frame, size)
+
+            # Scale the video to fit inside the target box without stretching it (e.g. a vertical video stays vertical)
+            if fit_size is None:
+                src_h, src_w = frame.shape[:2]
+                scale = min(size[0] / src_w, size[1] / src_h)
+                fit_size = (max(1, int(src_w * scale)), max(1, int(src_h * scale)))
+            frame = cv2.resize(frame, fit_size, interpolation=cv2.INTER_AREA)
             
             # Convert the frame from standard BGR color space to HSV for easier color filtering
             hsv = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
@@ -133,7 +140,11 @@ class HandSentinelUI:
         
         # Define the X coordinates (left to right) for placing the video
         x1, x2 = frame.shape[1] - w - 20, frame.shape[1] - 20
-        
+
+        # Skip the overlay if the camera frame is too small to hold it (slicing would produce a mismatched ROI)
+        if x1 < 0 or y2 > frame.shape[0]:
+            return frame
+
         # Select the Region of Interest (ROI) on the main camera frame where the video will go
         roi = frame[y1:y2, x1:x2]
         
