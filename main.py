@@ -144,10 +144,14 @@ def main():
             frame = ui.draw_hud(frame, combo_active=combo_active)
             
             # Display the final processed frame in the application window
-            ui.show_window(frame)
+            ui.show_window(frame, UI_CFG.window_name)
 
             # Wait for 1 millisecond and check if the 'q' key is pressed to manually break the loop
             if cv2.waitKey(1) & 0xFF == ord('q'):
+                break
+
+            # Stop when the user closes the window with the 'X' button, otherwise imshow would reopen it
+            if cv2.getWindowProperty(UI_CFG.window_name, cv2.WND_PROP_VISIBLE) < 1:
                 break
 
     # Handle the case where the user forcefully stops the script (e.g., using Ctrl+C in the terminal)
