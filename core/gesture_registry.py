@@ -4,6 +4,9 @@ from abc import ABC, abstractmethod
 # Import math to calculate distances between coordinates
 import math
 
+# Import the gesture thresholds so they can be tuned from a single place
+from config.settings import GESTURE_CFG
+
 class BaseGesture(ABC):
     # Enforce that any class inheriting from BaseGesture MUST have a 'detect' method
     @abstractmethod
@@ -11,7 +14,9 @@ class BaseGesture(ABC):
         ...
 
 class ScubaCatGesture(BaseGesture):
-    def __init__(self):
+    def __init__(self, cfg=GESTURE_CFG):
+        # Store the thresholds that define a valid pose
+        self.cfg = cfg
         # Define the point IDs corresponding to the tips of the 5 fingers
         self.tip_ids = [4, 8, 12, 16, 20]
         # Initialize the tolerance counter to 0
@@ -61,14 +66,14 @@ class ScubaCatGesture(BaseGesture):
                 # Calculate the exact distance between the centers of both hands
                 distance_between_hands = math.hypot(cx2 - cx1, cy2 - cy1)
                 
-                # Define the minimum distance they must be apart (15% of screen width)
-                min_distance_required = width * 0.15 
+                # Define the minimum distance they must be apart (a ratio of the screen width)
+                min_distance_required = width * self.cfg.min_hand_separation_ratio
                 
                 # Proceed only if the hands are safely separated from each other
                 if distance_between_hands > min_distance_required:
                     
-                    # Define the limit for the upper area of the screen (top 55%)
-                    face_zone_y_max = height * 0.55  
+                    # Define the limit for the upper area of the screen (the "face zone")
+                    face_zone_y_max = height * self.cfg.face_zone_ratio
                     
                     # Check if at least one of the hands is raised into the "face zone"
                     if cy1 < face_zone_y_max or cy2 < face_zone_y_max:
@@ -81,12 +86,13 @@ class ScubaCatGesture(BaseGesture):
                         fingers1 = sum(self.scan_active_fingers(hand1, is_right1))
                         fingers2 = sum(self.scan_active_fingers(hand2, is_right2))
                         
-                        # Validate the pose: One hand must be closed (0-1 fingers) and the other open (4-5 fingers)
-                        is_valid_pose = (fingers1 <= 1 and fingers2 >= 4) or (fingers1 >= 4 and fingers2 <= 1)
+                        # Validate the pose: One hand must be closed and the other open
+                        closed, opened = self.cfg.max_fingers_closed, self.cfg.min_fingers_open
+                        is_valid_pose = (fingers1 <= closed and fingers2 >= opened) or (fingers1 >= opened and fingers2 <= closed)
 
                         # If the pose is completely valid, activate the combo and reset the tolerance timer
                         if is_valid_pose:
-                            self.combo_tolerance = 20 
+                            self.combo_tolerance = self.cfg.combo_tolerance_frames
                             return True
 
         # If the combo is broken, check if we still have "grace period" frames left
