@@ -10,6 +10,9 @@ import pygame
 # Import logging to output warnings or errors to the console
 import logging
 
+# Import time to play the overlay video at its own speed, independent of the camera FPS
+import time
+
 # Import the custom FPSCounter to track and display the application's performance
 from utils.fps_counter import FPSCounter
 
@@ -20,16 +23,24 @@ class CatVideoProcessor:
     def __init__(self, path: str, target_size: tuple = (180, 180)):
         # Create an empty list to store all the processed frames of the video in memory
         self.frames = []
-        
+
+        # Native frame rate of the video (read in _preprocess, 30 FPS if the file does not report it)
+        self.fps = 30.0
+
         # Pre-process the video immediately upon initialization to avoid lag later
         self._preprocess(path, target_size)
-        
-        # Set a counter to track which frame of the video we are currently playing
-        self._index = 0
+
+        # Moment the playback started; the current frame is derived from the elapsed time
+        self._start_time = time.perf_counter()
 
     def _preprocess(self, path: str, size: tuple):
         # Open the video file from the provided path
         cap = cv2.VideoCapture(path)
+
+        # Store the video's own frame rate so playback speed does not depend on the camera
+        native_fps = cap.get(cv2.CAP_PROP_FPS)
+        if native_fps and native_fps > 0:
+            self.fps = native_fps
         
         # Define the lower and upper bounds for the green screen color in HSV format
         lower_green = np.array([35, 40, 40])
@@ -74,19 +85,21 @@ class CatVideoProcessor:
         if not self.frames:
             logger.warning("Overlay video not found or empty: %s", path)
 
+    def restart(self):
+        # Rewind the playback so the video starts from its first frame
+        self._start_time = time.perf_counter()
+
     def next_frame(self) -> tuple:
         # If the video failed to load or has no frames, return nothing
         if not self.frames:
             return None, None
-            
-        # Get the current foreground and mask based on the current index
-        item = self.frames[self._index]
-        
-        # Advance the index by 1. Use modulo (%) to loop back to 0 when reaching the end
-        self._index = (self._index + 1) % len(self.frames)
-        
+
+        # Pick the frame that matches the elapsed time. Use modulo (%) to loop back to 0 when reaching the end
+        elapsed = time.perf_counter() - self._start_time
+        index = int(elapsed * self.fps) % len(self.frames)
+
         # Return the requested frame data
-        return item
+        return self.frames[index]
 
 class HandSentinelUI:
     def __init__(self, video_path: str = "assets/Scuba_Cat.mp4", audio_path: str = "assets/audio.mp3"):
@@ -98,6 +111,9 @@ class HandSentinelUI:
         
         # Create a flag to track whether the sound effect is currently playing
         self._is_audio_playing = False
+
+        # Remember the combo state of the previous frame to detect when it turns on
+        self._was_active = False
         
         # Load the audio file into memory
         self._audio = self._load_audio(audio_path)
@@ -167,6 +183,11 @@ class HandSentinelUI:
         # Check if we need to start or stop the audio based on the combo status
         self._handle_audio(combo_active)
         
+        # Restart the video from the beginning each time the combo turns on
+        if combo_active and not self._was_active:
+            self.cat_processor.restart()
+        self._was_active = combo_active
+
         # If the correct hand gesture combo is detected, overlay the video onto the screen
         if combo_active:
             frame = self._overlay_cat(frame)
