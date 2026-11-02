@@ -153,38 +153,44 @@ class HandSentinelUI:
             
         # Extract the height and width of the overlay video
         h, w = fg.shape[:2]
-        
-        # Define the Y coordinates (top to bottom) for placing the video in the top-right corner
+
+        # Measure the status label so the green box can be exactly as wide as it
+        label = 'SCUBA MODE: ACTIVE'
+        (text_w, _), _ = cv2.getTextSize(label, cv2.FONT_HERSHEY_SIMPLEX, 0.5, 2)
+
+        # The box is as wide as the widest element (video or label), anchored to the top-right corner
+        box_w = max(w, text_w)
+        box_x2 = frame.shape[1] - 20
+        box_x1 = box_x2 - box_w
+
+        # Define the Y coordinates (top to bottom) for placing the video
         y1, y2 = 20, 20 + h
-        
-        # Define the X coordinates (left to right) for placing the video
-        x1, x2 = frame.shape[1] - w - 20, frame.shape[1] - 20
+
+        # Center the video horizontally inside the box
+        x1 = box_x1 + (box_w - w) // 2
+        x2 = x1 + w
 
         # Skip the overlay if the camera frame is too small to hold it (slicing would produce a mismatched ROI)
-        if x1 < 0 or y2 > frame.shape[0]:
+        if box_x1 < 0 or y2 > frame.shape[0]:
             return frame
 
         # Select the Region of Interest (ROI) on the main camera frame where the video will go
         roi = frame[y1:y2, x1:x2]
-        
+
         # Black out the area in the ROI where our subject (the cat) will be placed
         bg = cv2.bitwise_and(roi, roi, mask=mask)
-        
+
         # Combine the blacked-out background with our subject foreground and place it back on the camera frame
         frame[y1:y2, x1:x2] = cv2.add(bg, fg)
-        
-        # Draw a green rectangular border around the overlaid video
-        cv2.rectangle(frame, (x1-5, y1-5), (x2+5, y2+5), (0,255,0), 2)
-        
-        # Add text directly below the video indicating the mode is active.
-        # The label is wider than the (vertical) video, so align it to the right edge of the box
-        # and clamp it to the frame so it is never cut off
-        label = 'SCUBA MODE: ACTIVE'
-        (text_w, _), _ = cv2.getTextSize(label, cv2.FONT_HERSHEY_SIMPLEX, 0.5, 2)
-        text_x = max(5, min(x1, x2 + 5 - text_w))
+
+        # Draw a green rectangular border around the box (same width as the label below it)
+        cv2.rectangle(frame, (box_x1, y1-5), (box_x2, y2+5), (0,255,0), 2)
+
+        # Add the label directly below the box, centered so its edges line up with the box
+        text_x = box_x1 + (box_w - text_w) // 2
         cv2.putText(frame, label, (text_x, y2+25),
                     cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0,255,0), 2)
-                    
+
         return frame
 
     def draw_hud(self, frame: np.ndarray, combo_active: bool = False) -> np.ndarray:
