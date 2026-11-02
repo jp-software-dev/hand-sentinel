@@ -176,8 +176,13 @@ class HandSentinelUI:
         # Draw a green rectangular border around the overlaid video
         cv2.rectangle(frame, (x1-5, y1-5), (x2+5, y2+5), (0,255,0), 2)
         
-        # Add text directly below the video indicating the mode is active
-        cv2.putText(frame, 'SCUBA MODE: ACTIVE', (x1, y2+25),
+        # Add text directly below the video indicating the mode is active.
+        # The label is wider than the (vertical) video, so align it to the right edge of the box
+        # and clamp it to the frame so it is never cut off
+        label = 'SCUBA MODE: ACTIVE'
+        (text_w, _), _ = cv2.getTextSize(label, cv2.FONT_HERSHEY_SIMPLEX, 0.5, 2)
+        text_x = max(5, min(x1, x2 + 5 - text_w))
+        cv2.putText(frame, label, (text_x, y2+25),
                     cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0,255,0), 2)
                     
         return frame
