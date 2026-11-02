@@ -27,7 +27,7 @@ class GestureConfig:
 @dataclass(frozen=True)
 class UIConfig:
     # File paths for the required multimedia assets
-    video_path: str = "assets/scuba_cat.mp4"
+    video_path: str = "assets/Scuba_Cat.mp4"
     audio_path: str = "assets/audio.mp3"
     # Target resolution for scaling the cat overlay video
     cat_overlay_size: tuple = (180, 180)

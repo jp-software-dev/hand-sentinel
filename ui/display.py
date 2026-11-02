@@ -78,7 +78,7 @@ class CatVideoProcessor:
         return item
 
 class HandSentinelUI:
-    def __init__(self, video_path: str = "assets/scuba_cat.mp4", audio_path: str = "assets/audio.mp3"):
+    def __init__(self, video_path: str = "assets/Scuba_Cat.mp4", audio_path: str = "assets/audio.mp3"):
         # Initialize the FPS counter to monitor screen performance
         self.fps_counter = FPSCounter()
         
