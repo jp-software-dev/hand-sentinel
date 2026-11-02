@@ -13,8 +13,8 @@ class DetectorConfig:
 
 @dataclass(frozen=True)
 class GestureConfig:
-    # Number of frames the system will wait before dropping the combo if the gesture breaks
-    combo_tolerance_frames: int = 20
+    # Seconds the combo stays active after the gesture breaks (grace period, independent of FPS)
+    combo_grace_seconds: float = 0.7
     # Minimum physical distance required between the two hands (15% of screen width)
     min_hand_separation_ratio: float = 0.15
     # The upper portion of the screen considered the "face zone" (upper 55%)

@@ -4,6 +4,9 @@ from abc import ABC, abstractmethod
 # Import math to calculate distances between coordinates
 import math
 
+# Import time to measure the grace period in seconds instead of frames
+import time
+
 # Import the gesture thresholds so they can be tuned from a single place
 from config.settings import GESTURE_CFG
 
@@ -19,8 +22,8 @@ class ScubaCatGesture(BaseGesture):
         self.cfg = cfg
         # Define the point IDs corresponding to the tips of the 5 fingers
         self.tip_ids = [4, 8, 12, 16, 20]
-        # Initialize the tolerance counter to 0
-        self.combo_tolerance = 0
+        # Timestamp of the last frame where the full pose was detected (None = never)
+        self._last_valid_time = None
 
     @staticmethod
     def _dist(landmark_list, a, b):
@@ -86,16 +89,15 @@ class ScubaCatGesture(BaseGesture):
                         closed, opened = self.cfg.max_fingers_closed, self.cfg.min_fingers_open
                         is_valid_pose = (fingers1 <= closed and fingers2 >= opened) or (fingers1 >= opened and fingers2 <= closed)
 
-                        # If the pose is completely valid, activate the combo and reset the tolerance timer
+                        # If the pose is completely valid, activate the combo and restart the grace timer
                         if is_valid_pose:
-                            self.combo_tolerance = self.cfg.combo_tolerance_frames
+                            self._last_valid_time = time.perf_counter()
                             return True
 
-        # If the combo is broken, check if we still have "grace period" frames left
-        if self.combo_tolerance > 0:
-            # Consume one tolerance frame and pretend the combo is still active
-            self.combo_tolerance -= 1
-            return True
+        # If the combo is broken, keep it active while we are still inside the grace period
+        if self._last_valid_time is not None:
+            if time.perf_counter() - self._last_valid_time <= self.cfg.combo_grace_seconds:
+                return True
 
         # Return False if the gesture is not detected and the tolerance has run out
         return False
