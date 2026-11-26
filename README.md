@@ -160,3 +160,11 @@ registry.register("my_gesture", MyGesture())
 * **`Overlay video not found or empty`** Check that `assets/Scuba_Cat.mp4` exists. The file name is case-sensitive on Linux/macOS.
 * **`Audio not found`** Check that `assets/audio.mp3` exists.
 * **`No frame received from the camera`** The webcam stalled; the app retries and closes only after several consecutive failures.
+
+## 🔗 Related Project
+
+Hand Sentinel uses MediaPipe landmarks with hand-written geometric rules. For a learned approach built on the same landmarks, see [**NeuralSign-LSM**](https://github.com/jp-software-dev/neural-sign-lsm), which trains a neural network to translate the Mexican Sign Language alphabet into text and voice.
+
+## 👤 Author
+
+Juan Pablo Mercado Arizmendi
